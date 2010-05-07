@@ -33,15 +33,19 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.MapMaker;
 import com.google.inject.Inject;
 
+import de.cosmocode.collections.Procedure;
 import de.cosmocode.palava.core.Registry;
+import de.cosmocode.palava.ipc.IpcConnectionCreateEvent;
+import de.cosmocode.palava.ipc.IpcConnectionDestroyEvent;
 import de.cosmocode.palava.ipc.protocol.DetachedConnection;
 import de.cosmocode.palava.ipc.protocol.Protocol;
+import de.cosmocode.palava.ipc.protocol.ProtocolException;
 
 /**
  * A {@link ChannelHandler} which processes incoming json
  * requests using configured protocols.
- *
- * @since 
+ * 
+ * @since 1.0
  * @author Willi Schoenborn
  */
 final class JsonHandler extends SimpleChannelHandler {
@@ -50,17 +54,29 @@ final class JsonHandler extends SimpleChannelHandler {
 
     private final ConcurrentMap<Channel, DetachedConnection> connections = new MapMaker().makeMap();
     
+    private final Registry registry;
+    
     private final Iterable<Protocol> protocols;
     
     @Inject
     public JsonHandler(Registry registry) {
-        Preconditions.checkNotNull(registry, "Registry");
-        this.protocols = registry.find(Protocol.class, Json.JSON_OR_ANY_PROTOCOL);
+        this.registry = Preconditions.checkNotNull(registry, "Registry");
+        this.protocols = registry.find(Protocol.class, Json.JSON_OR_ANY_FORMAT);
     }
     
     @Override
     public void channelConnected(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
-        connections.put(event.getChannel(), new JsonConnection());
+        final DetachedConnection connection = new JsonConnection();
+        connections.put(event.getChannel(), connection);
+        
+        registry.notify(IpcConnectionCreateEvent.class, new Procedure<IpcConnectionCreateEvent>() {
+           
+            @Override
+            public void apply(IpcConnectionCreateEvent input) {
+                input.eventIpcConnectionCreate(connection);
+            }
+            
+        });
     }
     
     @Override
@@ -82,6 +98,16 @@ final class JsonHandler extends SimpleChannelHandler {
     @Override
     public void channelClosed(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
         final DetachedConnection connection = connections.remove(event.getChannel());
+        
+        registry.notifySilent(IpcConnectionDestroyEvent.class, new Procedure<IpcConnectionDestroyEvent>() {
+            
+            @Override
+            public void apply(IpcConnectionDestroyEvent input) {
+                input.eventIpcConnectionDestroy(connection);
+            }
+            
+        });
+        
         connection.clear();
     }
 
@@ -89,9 +115,13 @@ final class JsonHandler extends SimpleChannelHandler {
         try {
             LOG.trace("Processing request of type {} using {}", request.getClass(), protocol);
             return protocol.process(request, connection);
+        } catch (ProtocolException e) {
+            LOG.warn("Error in protocol", e);
+            return protocol.onError(e, request);
         /* CHECKSTYLE:OFF */
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
         /* CHECKSTYLE:ON */
+            LOG.error("Unexpected exception in protocol", e);
             return protocol.onError(e, request);
         }
     }

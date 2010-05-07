@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A {@link FrameDecoder} which frames json arrays/objects.
- *
+ * 
  * @since 1.0
  * @author Willi Schoenborn
  */
@@ -60,26 +60,44 @@ final class JsonFrameDecoder extends FrameDecoder {
         return structure('{', '}', buffer);
     }
     
-    // TODO handle escapes/strings
     private int structure(char open, char close, ChannelBuffer buffer) {
-        int arrays = 0;
+        int structures = 0;
+        boolean string = false;
+        boolean escaped = false;
         
         int i = buffer.readerIndex();
         
         while (i < buffer.writerIndex()) {
             final byte current = buffer.getByte(i);
-            
-            if (current == open) {
-                arrays += 1;
-            } else if (current == close) {
-                arrays -= 1;
-                if (arrays == 0) return i - buffer.readerIndex();
+
+            if (string) {
+                if (current == '"' && !escaped) {
+                    string = false;
+                } else if (current == '\\' && !escaped) {
+                    escaped = true;
+                } else if (escaped) {
+                    escaped = false;
+                }
+            } else {
+                structures += delta(open, close, current);
+                if (structures == 0) return i - buffer.readerIndex();
             }
             
             i++;
         }
         
         return -1;
+    }
+    
+    // to reduce cyclomatic complexity
+    private int delta(char open, char close, byte current) {
+        if (current == open) {
+            return 1;
+        } else if (current == close) {
+            return -1;
+        } else {
+            return 0;
+        }
     }
 
 }

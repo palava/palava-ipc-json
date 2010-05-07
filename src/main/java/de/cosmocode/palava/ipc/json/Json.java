@@ -26,7 +26,7 @@ import com.google.common.base.Predicate;
  */
 public final class Json {
 
-    static final Predicate<Object> JSON_OR_ANY_PROTOCOL = new Predicate<Object>() {
+    static final Predicate<Object> JSON_OR_ANY_FORMAT = new Predicate<Object>() {
         
         @Override
         public boolean apply(Object input) {

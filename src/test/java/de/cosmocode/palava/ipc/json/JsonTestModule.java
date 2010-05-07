@@ -49,6 +49,7 @@ public final class JsonTestModule implements Module {
         binder.install(new ExecutorModule(Worker.class, Worker.NAME));
         binder.install(new NettyModule());
         binder.install(new JsonNettyModule());
+        binder.install(new JsonFrameDecoderModule());
         binder.bind(EchoProtocol.class).asEagerSingleton();
     }
 

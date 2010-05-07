@@ -49,7 +49,7 @@ public final class JsonConnection extends AbstractScopeContext implements Detach
 
     @Override
     public IpcSession getSession() {
-        Preconditions.checkState(currentSession != null, "Not attached to a session");
+        Preconditions.checkState(currentSession != null, "Not yet attached to a session");
         return currentSession;
     }
 
