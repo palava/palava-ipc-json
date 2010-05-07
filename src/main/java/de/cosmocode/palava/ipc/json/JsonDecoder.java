@@ -21,10 +21,14 @@ import java.util.Map;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelException;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 
 /**
  * Decodes a json string into a {@link List} or a {@link Map}.
@@ -36,25 +40,30 @@ final class JsonDecoder extends OneToOneDecoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonDecoder.class);
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private final ObjectMapper mapper;
+    
+    @Inject
+    public JsonDecoder(ObjectMapper mapper) {
+        this.mapper = Preconditions.checkNotNull(mapper, "Mapper");
+    }
     
     @Override
     protected Object decode(ChannelHandlerContext ctx, Channel channel, Object message) throws Exception {
         if (message instanceof String) {
             final String content = String.class.cast(message);
-            if (content.startsWith("[")) {
+            final char c = content.charAt(0);
+            if (c == '[') {
                 LOG.trace("Decoding list from {}", content);
-                return MAPPER.readValue(content, List.class);
-            } else if (content.startsWith("{")) {
+                return mapper.readValue(content, List.class);
+            } else if (c == '{') {
                 LOG.trace("Decoding map from {}", content);
-                return MAPPER.readValue(content, Map.class);
+                return mapper.readValue(content, Map.class);
             } else {
-                return message;
+                throw new ChannelException("Invalid json " + content);
             }
         } else {
             return message;
         }
     }
-    
     
 }

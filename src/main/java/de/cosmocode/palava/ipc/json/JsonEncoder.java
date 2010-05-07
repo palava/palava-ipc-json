@@ -21,6 +21,9 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+
 /**
  * Encodes objects into json.
  *
@@ -29,11 +32,16 @@ import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
  */
 final class JsonEncoder extends OneToOneEncoder {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private final ObjectMapper mapper;
+    
+    @Inject
+    public JsonEncoder(ObjectMapper mapper) {
+        this.mapper = Preconditions.checkNotNull(mapper, "Mapper");
+    }
     
     @Override
     protected Object encode(ChannelHandlerContext ctx, Channel channel, Object message) throws Exception {
-        return MAPPER.writeValueAsString(message);
+        return mapper.writeValueAsString(message);
     }
 
 }

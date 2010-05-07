@@ -18,6 +18,8 @@ package de.cosmocode.palava.ipc.json;
 
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandler;
@@ -35,11 +37,15 @@ import com.google.inject.Inject;
 
 import de.cosmocode.collections.Procedure;
 import de.cosmocode.palava.core.Registry;
+import de.cosmocode.palava.core.lifecycle.Disposable;
+import de.cosmocode.palava.core.lifecycle.Initializable;
+import de.cosmocode.palava.core.lifecycle.LifecycleException;
 import de.cosmocode.palava.ipc.IpcConnectionCreateEvent;
 import de.cosmocode.palava.ipc.IpcConnectionDestroyEvent;
 import de.cosmocode.palava.ipc.protocol.DetachedConnection;
 import de.cosmocode.palava.ipc.protocol.Protocol;
 import de.cosmocode.palava.ipc.protocol.ProtocolException;
+import de.cosmocode.palava.jmx.MBeanService;
 
 /**
  * A {@link ChannelHandler} which processes incoming json
@@ -48,9 +54,13 @@ import de.cosmocode.palava.ipc.protocol.ProtocolException;
  * @since 1.0
  * @author Willi Schoenborn
  */
-final class JsonHandler extends SimpleChannelHandler {
+final class JsonHandler extends SimpleChannelHandler implements JsonHandlerMBean, Initializable, Disposable {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonHandler.class);
+    
+    private static final long START_DATE = System.currentTimeMillis();
+    
+    private final AtomicLong throughput = new AtomicLong();
 
     private final ConcurrentMap<Channel, DetachedConnection> connections = new MapMaker().makeMap();
     
@@ -58,10 +68,18 @@ final class JsonHandler extends SimpleChannelHandler {
     
     private final Iterable<Protocol> protocols;
     
+    private final MBeanService mBeanService;
+    
     @Inject
-    public JsonHandler(Registry registry) {
+    public JsonHandler(Registry registry, MBeanService mBeanService) {
         this.registry = Preconditions.checkNotNull(registry, "Registry");
         this.protocols = registry.find(Protocol.class, Json.JSON_OR_ANY_FORMAT);
+        this.mBeanService = Preconditions.checkNotNull(mBeanService, "MBeanService");
+    }
+    
+    @Override
+    public void initialize() throws LifecycleException {
+        mBeanService.register(this);
     }
     
     @Override
@@ -95,20 +113,11 @@ final class JsonHandler extends SimpleChannelHandler {
         }
     }
     
-    @Override
-    public void channelClosed(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
-        final DetachedConnection connection = connections.remove(event.getChannel());
-        
-        registry.notifySilent(IpcConnectionDestroyEvent.class, new Procedure<IpcConnectionDestroyEvent>() {
-            
-            @Override
-            public void apply(IpcConnectionDestroyEvent input) {
-                input.eventIpcConnectionDestroy(connection);
-            }
-            
-        });
-        
-        connection.clear();
+    private Protocol findProtocol(Object request) {
+        for (Protocol protocol : protocols) {
+            if (protocol.supports(request)) return protocol;
+        }
+        throw new NoSuchElementException("No protocol found which can handle " + request);
     }
 
     private Object process(Protocol protocol, Object request, DetachedConnection connection) {
@@ -126,11 +135,20 @@ final class JsonHandler extends SimpleChannelHandler {
         }
     }
     
-    private Protocol findProtocol(Object request) {
-        for (Protocol protocol : protocols) {
-            if (protocol.supports(request)) return protocol;
-        }
-        throw new NoSuchElementException("No protocol found which can handle " + request);
+    @Override
+    public void channelClosed(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
+        final DetachedConnection connection = connections.remove(event.getChannel());
+        
+        registry.notifySilent(IpcConnectionDestroyEvent.class, new Procedure<IpcConnectionDestroyEvent>() {
+            
+            @Override
+            public void apply(IpcConnectionDestroyEvent input) {
+                input.eventIpcConnectionDestroy(connection);
+            }
+            
+        });
+        
+        connection.clear();
     }
     
     @Override
@@ -138,6 +156,24 @@ final class JsonHandler extends SimpleChannelHandler {
         final Channel channel = event.getChannel();
         LOG.error("Exception in channel " + channel, event.getCause());
         channel.close();
+    }
+
+    @Override
+    public long getOverallThroughput() {
+        return throughput.get();
+    }
+    
+    @Override
+    public long getDailyThrougput() {
+        final long now = System.currentTimeMillis();
+        final long duration = now - START_DATE;
+        final long days = Math.max(TimeUnit.MILLISECONDS.toDays(duration), 1);
+        return getOverallThroughput() / days;
+    }
+    
+    @Override
+    public void dispose() throws LifecycleException {
+        mBeanService.unregister(this);
     }
     
 }
