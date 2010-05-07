@@ -1,0 +1,113 @@
+/**
+ * Copyright 2010 CosmoCode GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package de.cosmocode.palava.ipc.json;
+
+import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentMap;
+
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelHandler;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.MapMaker;
+import com.google.inject.Inject;
+
+import de.cosmocode.palava.core.Registry;
+import de.cosmocode.palava.ipc.protocol.DetachedConnection;
+import de.cosmocode.palava.ipc.protocol.Protocol;
+
+/**
+ * A {@link ChannelHandler} which processes incoming json
+ * requests using configured protocols.
+ *
+ * @since 
+ * @author Willi Schoenborn
+ */
+final class JsonHandler extends SimpleChannelHandler {
+
+    private static final Logger LOG = LoggerFactory.getLogger(JsonHandler.class);
+
+    private final ConcurrentMap<Channel, DetachedConnection> connections = new MapMaker().makeMap();
+    
+    private final Iterable<Protocol> protocols;
+    
+    @Inject
+    public JsonHandler(Registry registry) {
+        Preconditions.checkNotNull(registry, "Registry");
+        this.protocols = registry.find(Protocol.class, Json.JSON_OR_ANY_PROTOCOL);
+    }
+    
+    @Override
+    public void channelConnected(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
+        connections.put(event.getChannel(), new JsonConnection());
+    }
+    
+    @Override
+    public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
+        final Object request = event.getMessage();
+        final Channel channel = event.getChannel();
+        
+        final Protocol protocol = findProtocol(request);
+        final DetachedConnection connection = connections.get(channel);
+        final Object response = process(protocol, request, connection);
+        
+        if (response == Protocol.NO_RESPONSE) {
+            LOG.trace("Omitting response as requested by {}", protocol);
+        } else {
+            channel.write(response);
+        }
+    }
+    
+    @Override
+    public void channelClosed(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
+        final DetachedConnection connection = connections.remove(event.getChannel());
+        connection.clear();
+    }
+
+    private Object process(Protocol protocol, Object request, DetachedConnection connection) {
+        try {
+            LOG.trace("Processing request of type {} using {}", request.getClass(), protocol);
+            return protocol.process(request, connection);
+        /* CHECKSTYLE:OFF */
+        } catch (Exception e) {
+        /* CHECKSTYLE:ON */
+            return protocol.onError(e, request);
+        }
+    }
+    
+    private Protocol findProtocol(Object request) {
+        for (Protocol protocol : protocols) {
+            if (protocol.supports(request)) return protocol;
+        }
+        throw new NoSuchElementException("No protocol found which can handle " + request);
+    }
+    
+    @Override
+    public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
+        final Channel channel = event.getChannel();
+        LOG.error("Exception in channel " + channel, event.getCause());
+        channel.close();
+    }
+    
+}
