@@ -22,8 +22,6 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A {@link FrameDecoder} which frames json arrays/objects.
@@ -34,73 +32,75 @@ import org.slf4j.LoggerFactory;
 @NotThreadSafe
 final class JsonFrameDecoder extends FrameDecoder {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JsonFrameDecoder.class);
-
+    private char open;
+    
+    private char close;
+    
+    private int counter;
+    
+    private int index;
+    
+    private boolean string;
+    
+    private boolean escaped;
+    
     @Override
     protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
         if (buffer.readable()) {
-            final byte b = buffer.getByte(0);
-            final int index;
-            if (b == '[') {
-                index = array(buffer);
-            } else if (b == '{') {
-                index = object(buffer);
-            } else {
-                LOG.warn("Unknown data starting with {}", b);
-                return null;
-            }
-            return index == -1 ? null : buffer.readBytes(index + 1);
+            readFirst(buffer);
+            count(buffer);
+            return counter == 0 ? buffer.readBytes(index + 1) : null;
         } else {
             return null;
         }
     }
     
-    private int array(ChannelBuffer buffer) {
-        return structure('[', ']', buffer);
+    private void readFirst(ChannelBuffer buffer) {
+        if (open == 0 || close == 0) {
+            final byte b = buffer.getByte(0);
+            if (b == '[') {
+                open = '[';
+                close = ']';
+            } else if (b == '{') {
+                open = '{';
+                close = '}';
+            } else {
+                throw new IllegalArgumentException(String.format("Unknown starting character {}", b));
+            }
+        }
     }
     
-    private int object(ChannelBuffer buffer) {
-        return structure('{', '}', buffer);
-    }
-    
-    private int structure(char open, char close, ChannelBuffer buffer) {
-        int structures = 0;
-        boolean string = false;
-        boolean escaped = false;
-        
+    private void count(ChannelBuffer buffer) {
         int i = buffer.readerIndex();
         
         while (i < buffer.writerIndex()) {
-            final byte current = buffer.getByte(i);
-
             if (string) {
-                if (current == '"' && !escaped) {
-                    string = false;
-                } else if (current == '\\' && !escaped) {
-                    escaped = true;
-                } else if (escaped) {
-                    escaped = false;
-                }
+                inString(buffer.getByte(i));
             } else {
-                structures += delta(open, close, current);
-                if (structures == 0) return i - buffer.readerIndex();
+                outsideOfString(buffer.getByte(i));
+                if (counter == 0) index = i - buffer.readerIndex();
             }
             
             i++;
         }
-        
-        return -1;
     }
     
-    // to reduce cyclomatic complexity
-    private int delta(char open, char close, byte current) {
-        if (current == open) {
-            return 1;
-        } else if (current == close) {
-            return -1;
-        } else {
-            return 0;
+    private void inString(byte current) {
+        if (current == '"' && !escaped) {
+            string = false;
+        } else if (current == '\\' && !escaped) {
+            escaped = true;
+        } else if (escaped) {
+            escaped = false;
         }
     }
-
+    
+    private void outsideOfString(byte current) {
+        if (current == open) {
+            counter += 1;
+        } else if (current == close) {
+            counter -= 1;
+        }
+    }
+    
 }
