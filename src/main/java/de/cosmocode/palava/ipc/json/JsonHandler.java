@@ -21,6 +21,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.annotation.concurrent.ThreadSafe;
+
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -28,6 +30,7 @@ import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +45,7 @@ import de.cosmocode.palava.core.lifecycle.Initializable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
 import de.cosmocode.palava.ipc.IpcConnectionCreateEvent;
 import de.cosmocode.palava.ipc.IpcConnectionDestroyEvent;
+import de.cosmocode.palava.ipc.protocol.DefaultDetachedConnection;
 import de.cosmocode.palava.ipc.protocol.DetachedConnection;
 import de.cosmocode.palava.ipc.protocol.Protocol;
 import de.cosmocode.palava.ipc.protocol.ProtocolException;
@@ -54,6 +58,8 @@ import de.cosmocode.palava.jmx.MBeanService;
  * @since 1.0
  * @author Willi Schoenborn
  */
+@Sharable
+@ThreadSafe
 final class JsonHandler extends SimpleChannelHandler implements JsonHandlerMBean, Initializable, Disposable {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonHandler.class);
@@ -84,7 +90,7 @@ final class JsonHandler extends SimpleChannelHandler implements JsonHandlerMBean
     
     @Override
     public void channelConnected(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
-        final DetachedConnection connection = new JsonConnection();
+        final DetachedConnection connection = new DefaultDetachedConnection();
         connections.put(event.getChannel(), connection);
         
         registry.notify(IpcConnectionCreateEvent.class, new Procedure<IpcConnectionCreateEvent>() {

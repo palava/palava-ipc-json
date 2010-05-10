@@ -19,10 +19,13 @@ package de.cosmocode.palava.ipc.json;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.concurrent.ThreadSafe;
+
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelException;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +39,8 @@ import com.google.inject.Inject;
  * @since 1.0
  * @author Willi Schoenborn
  */
+@Sharable
+@ThreadSafe
 final class JsonDecoder extends OneToOneDecoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonDecoder.class);

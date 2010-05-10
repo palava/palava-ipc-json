@@ -16,9 +16,12 @@
 
 package de.cosmocode.palava.ipc.json;
 
+import javax.annotation.concurrent.ThreadSafe;
+
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
 import com.google.common.base.Preconditions;
@@ -30,6 +33,8 @@ import com.google.inject.Inject;
  * @since 1.0
  * @author Willi Schoenborn
  */
+@Sharable
+@ThreadSafe
 final class JsonEncoder extends OneToOneEncoder {
 
     private final ObjectMapper mapper;

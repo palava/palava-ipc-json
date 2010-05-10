@@ -16,6 +16,8 @@
 
 package de.cosmocode.palava.ipc.json;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -29,6 +31,7 @@ import org.slf4j.LoggerFactory;
  * @since 1.0
  * @author Willi Schoenborn
  */
+@NotThreadSafe
 final class JsonFrameDecoder extends FrameDecoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonFrameDecoder.class);
