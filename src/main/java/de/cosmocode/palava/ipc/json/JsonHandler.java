@@ -18,8 +18,6 @@ package de.cosmocode.palava.ipc.json;
 
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -64,10 +62,6 @@ final class JsonHandler extends SimpleChannelHandler implements JsonHandlerMBean
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonHandler.class);
     
-    private static final long START_DATE = System.currentTimeMillis();
-    
-    private final AtomicLong throughput = new AtomicLong();
-
     private final ConcurrentMap<Channel, DetachedConnection> connections = new MapMaker().makeMap();
     
     private final Registry registry;
@@ -164,19 +158,6 @@ final class JsonHandler extends SimpleChannelHandler implements JsonHandlerMBean
         channel.close();
     }
 
-    @Override
-    public long getOverallThroughput() {
-        return throughput.get();
-    }
-    
-    @Override
-    public long getDailyThrougput() {
-        final long now = System.currentTimeMillis();
-        final long duration = now - START_DATE;
-        final long days = Math.max(TimeUnit.MILLISECONDS.toDays(duration), 1);
-        return getOverallThroughput() / days;
-    }
-    
     @Override
     public void dispose() throws LifecycleException {
         mBeanService.unregister(this);
