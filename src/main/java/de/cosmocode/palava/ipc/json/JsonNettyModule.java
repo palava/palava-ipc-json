@@ -73,17 +73,17 @@ public final class JsonNettyModule implements Module {
      * Provides a channel pipeline factory.
      * 
      * @since 1.0
-     * @param pipeline provider for the underlying pipeline
+     * @param provider provider for the underlying pipeline
      * @return a {@link ChannelPipelineFactory}
      */
     @Provides
     @Singleton
-    ChannelPipelineFactory providerChannelPipelineFactory(final Provider<ChannelPipeline> pipeline) {
+    ChannelPipelineFactory providerChannelPipelineFactory(final Provider<ChannelPipeline> provider) {
         return new ChannelPipelineFactory() {
             
             @Override
             public ChannelPipeline getPipeline() {
-                return pipeline.get();
+                return provider.get();
             }
             
         };
