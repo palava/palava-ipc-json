@@ -38,11 +38,10 @@ import com.google.inject.Singleton;
  */
 public final class JsonNettyModule implements Module {
 
-    private static final StringDecoder STRING_DECODER = new StringDecoder(Charsets.UTF_8);
-    private static final StringEncoder STRING_ENCODER = new StringEncoder(Charsets.UTF_8);
-    
     @Override
     public void configure(Binder binder) {
+        binder.bind(StringDecoder.class).toInstance(new StringDecoder(Charsets.UTF_8));
+        binder.bind(StringEncoder.class).toInstance(new StringEncoder(Charsets.UTF_8));
         binder.bind(JsonDecoder.class).in(Singleton.class);
         binder.bind(JsonEncoder.class).in(Singleton.class);
         binder.bind(JsonHandler.class).in(Singleton.class);
@@ -53,17 +52,20 @@ public final class JsonNettyModule implements Module {
      * 
      * @since 1.0
      * @param frameDecoder the frame decoder used to frame json structures
+     * @param stringDecoder the string decoder
+     * @param stringEncoder the string encoder
      * @param decoder string to json decoder
      * @param encoder json to string encoder
      * @param handler json handler
      * @return new {@link ChannelPipeline}
      */
     @Provides
-    ChannelPipeline provideChannelPipeline(@JsonFraming ChannelHandler frameDecoder, JsonDecoder decoder, 
-        JsonEncoder encoder, JsonHandler handler) {
+    ChannelPipeline provideChannelPipeline(@JsonFraming ChannelHandler frameDecoder,
+        StringDecoder stringDecoder, StringEncoder stringEncoder,
+        JsonDecoder decoder, JsonEncoder encoder, JsonHandler handler) {
         return Channels.pipeline(
             frameDecoder,
-            STRING_DECODER, STRING_ENCODER,
+            stringDecoder, stringEncoder,
             decoder, encoder,
             handler
         );
