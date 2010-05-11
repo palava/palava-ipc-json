@@ -3,15 +3,15 @@ package de.cosmocode.palava.ipc.json;
 import java.util.List;
 import java.util.Map;
 
-import de.cosmocode.palava.ipc.netty.Connection;
+import de.cosmocode.palava.ipc.netty.ClientConnection;
 
 /**
- * A json specific connection on top of {@link Connection}.
+ * A json specific connection on top of {@link ClientConnection}.
  *
  * @since 1.0
  * @author Willi Schoenborn
  */
-public interface JsonClientConnection extends Connection {
+public interface JsonClientConnection extends ClientConnection {
 
     /**
      * Sends the specified string and notifies the given callback asynchronously.

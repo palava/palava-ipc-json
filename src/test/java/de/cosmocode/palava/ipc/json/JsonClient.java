@@ -9,7 +9,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import de.cosmocode.palava.ipc.netty.AbstractClient;
 import de.cosmocode.palava.ipc.netty.Client;
-import de.cosmocode.palava.ipc.netty.Connection;
+import de.cosmocode.palava.ipc.netty.ClientConnection;
 import de.cosmocode.palava.ipc.netty.NettyClient;
 
 /**
@@ -26,7 +26,7 @@ public final class JsonClient extends AbstractClient implements Client {
     
     @Override
     public JsonClientConnection connect(InetSocketAddress address) {
-        final Connection connection = client.connect(address);
+        final ClientConnection connection = client.connect(address);
         return new InternalJsonConnection(connection);
     }
     
@@ -38,9 +38,9 @@ public final class JsonClient extends AbstractClient implements Client {
      */
     private final class InternalJsonConnection implements JsonClientConnection {
         
-        private final Connection connection;
+        private final ClientConnection connection;
         
-        public InternalJsonConnection(Connection connection) {
+        public InternalJsonConnection(ClientConnection connection) {
             this.connection = connection;
         }
 

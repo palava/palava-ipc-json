@@ -28,7 +28,7 @@ import org.junit.Test;
 import de.cosmocode.palava.core.Framework;
 import de.cosmocode.palava.core.Palava;
 import de.cosmocode.palava.ipc.netty.Client;
-import de.cosmocode.palava.ipc.netty.Connection;
+import de.cosmocode.palava.ipc.netty.ClientConnection;
 import de.cosmocode.palava.ipc.netty.NettyClient;
 
 /**
@@ -51,7 +51,7 @@ public final class JsonTest {
         framework.start();
         
         final Client client = new NettyClient();
-        final Connection connection = client.connect("localhost", 8081);
+        final ClientConnection connection = client.connect("localhost", 8081);
         
         Writer writer;
         JsonGenerator generator;
