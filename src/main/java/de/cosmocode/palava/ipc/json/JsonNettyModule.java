@@ -30,6 +30,9 @@ import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
+import de.cosmocode.palava.core.Registry;
+import de.cosmocode.palava.ipc.protocol.Protocol;
+
 /**
  * Binds json {@link ChannelPipelineFactory}, {@link ChannelHandler}s, etc.
  *
@@ -89,6 +92,20 @@ public final class JsonNettyModule implements Module {
             }
             
         };
+    }
+    
+    /**
+     * Provides all json protocols.
+     * 
+     * @since 1.0 
+     * @param registry the current registry
+     * @return iterable of json protocols
+     */
+    @Provides
+    @Singleton
+    @Json
+    Iterable<Protocol> provideProtocols(Registry registry) {
+        return registry.find(Protocol.class, Json.OR_ANY);
     }
     
 }

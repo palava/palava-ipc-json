@@ -71,9 +71,9 @@ final class JsonHandler extends SimpleChannelHandler implements JsonHandlerMBean
     private final MBeanService mBeanService;
     
     @Inject
-    public JsonHandler(Registry registry, MBeanService mBeanService) {
+    public JsonHandler(Registry registry, @Json Iterable<Protocol> protocols, MBeanService mBeanService) {
         this.registry = Preconditions.checkNotNull(registry, "Registry");
-        this.protocols = registry.find(Protocol.class, Json.JSON_OR_ANY);
+        this.protocols = Preconditions.checkNotNull(protocols, "Protocols");
         this.mBeanService = Preconditions.checkNotNull(mBeanService, "MBeanService");
     }
     

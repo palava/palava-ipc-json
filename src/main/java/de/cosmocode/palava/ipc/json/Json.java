@@ -16,17 +16,29 @@
 
 package de.cosmocode.palava.ipc.json;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 import com.google.common.base.Predicate;
+import com.google.inject.BindingAnnotation;
 
 /**
- * Static utility class for json communication.
+ * Binding annotation and utility class for json communication.
  *
  * @since 1.0
  * @author Willi Schoenborn
  */
-public final class Json {
+@Retention(RetentionPolicy.RUNTIME)
+@Target({
+    ElementType.METHOD,
+    ElementType.PARAMETER
+})
+@BindingAnnotation
+public @interface Json {
 
-    static final Predicate<Object> JSON_OR_ANY = new Predicate<Object>() {
+    Predicate<Object> OR_ANY = new Predicate<Object>() {
         
         @Override
         public boolean apply(Object input) {
@@ -35,8 +47,4 @@ public final class Json {
         
     };
     
-    private Json() {
-        
-    }
-
 }
