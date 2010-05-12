@@ -36,8 +36,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.MapMaker;
 import com.google.inject.Inject;
 
-import de.cosmocode.collections.Procedure;
-import de.cosmocode.palava.core.Registry;
+import de.cosmocode.palava.core.Registry.Proxy;
+import de.cosmocode.palava.core.Registry.SilentProxy;
 import de.cosmocode.palava.core.lifecycle.Disposable;
 import de.cosmocode.palava.core.lifecycle.Initializable;
 import de.cosmocode.palava.core.lifecycle.LifecycleException;
@@ -64,16 +64,21 @@ final class JsonHandler extends SimpleChannelHandler implements JsonHandlerMBean
     
     private final ConcurrentMap<Channel, DetachedConnection> connections = new MapMaker().makeMap();
     
-    private final Registry registry;
-    
     private final Iterable<Protocol> protocols;
+    
+    private final IpcConnectionCreateEvent createEvent;
+    
+    private final IpcConnectionDestroyEvent destroyEvent;
     
     private final MBeanService mBeanService;
     
     @Inject
-    public JsonHandler(Registry registry, @Json Iterable<Protocol> protocols, MBeanService mBeanService) {
-        this.registry = Preconditions.checkNotNull(registry, "Registry");
+    public JsonHandler(@Json Iterable<Protocol> protocols,
+        @Proxy IpcConnectionCreateEvent createEvent, @SilentProxy IpcConnectionDestroyEvent destroyEvent,
+        MBeanService mBeanService) {
         this.protocols = Preconditions.checkNotNull(protocols, "Protocols");
+        this.createEvent = Preconditions.checkNotNull(createEvent, "CreateEvent");
+        this.destroyEvent = Preconditions.checkNotNull(destroyEvent, "DestroyEvent");
         this.mBeanService = Preconditions.checkNotNull(mBeanService, "MBeanService");
     }
     
@@ -87,15 +92,7 @@ final class JsonHandler extends SimpleChannelHandler implements JsonHandlerMBean
         final Channel channel = event.getChannel();
         final DetachedConnection connection = new ChannelConnection(channel);
         connections.put(channel, connection);
-        
-        registry.notify(IpcConnectionCreateEvent.class, new Procedure<IpcConnectionCreateEvent>() {
-           
-            @Override
-            public void apply(IpcConnectionCreateEvent input) {
-                input.eventIpcConnectionCreate(connection);
-            }
-            
-        });
+        createEvent.eventIpcConnectionCreate(connection);
     }
     
     @Override
@@ -140,16 +137,7 @@ final class JsonHandler extends SimpleChannelHandler implements JsonHandlerMBean
     @Override
     public void channelClosed(ChannelHandlerContext context, ChannelStateEvent event) throws Exception {
         final DetachedConnection connection = connections.remove(event.getChannel());
-        
-        registry.notifySilent(IpcConnectionDestroyEvent.class, new Procedure<IpcConnectionDestroyEvent>() {
-            
-            @Override
-            public void apply(IpcConnectionDestroyEvent input) {
-                input.eventIpcConnectionDestroy(connection);
-            }
-            
-        });
-        
+        destroyEvent.eventIpcConnectionDestroy(connection);
         connection.clear();
     }
     

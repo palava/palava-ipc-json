@@ -24,6 +24,7 @@ import de.cosmocode.palava.concurrent.ExecutorModule;
 import de.cosmocode.palava.core.DefaultRegistryModule;
 import de.cosmocode.palava.core.inject.TypeConverterModule;
 import de.cosmocode.palava.core.lifecycle.LifecycleModule;
+import de.cosmocode.palava.ipc.IpcEventModule;
 import de.cosmocode.palava.ipc.netty.Boss;
 import de.cosmocode.palava.ipc.netty.NettyModule;
 import de.cosmocode.palava.ipc.netty.Worker;
@@ -49,6 +50,7 @@ public final class JsonTestModule implements Module {
         binder.install(new ExecutorModule(Worker.class, Worker.NAME));
         binder.install(new NettyModule());
         binder.install(new JsonNettyModule());
+        binder.install(new IpcEventModule());
         binder.install(new JsonFrameDecoderModule());
         binder.bind(EchoProtocol.class).asEagerSingleton();
     }

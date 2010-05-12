@@ -65,7 +65,7 @@ final class JsonFrameDecoder extends FrameDecoder {
                 open = '{';
                 close = '}';
             } else {
-                throw new IllegalArgumentException(String.format("Unknown starting character {}", b));
+                throw new IllegalArgumentException(String.format("Unknown starting character {}", (char) b));
             }
         }
     }
