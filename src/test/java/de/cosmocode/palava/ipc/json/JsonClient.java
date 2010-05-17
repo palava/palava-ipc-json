@@ -72,12 +72,12 @@ public final class JsonClient extends AbstractClient implements Client {
         
         @Override
         public <T> T send(Map<?, ?> request) {
-            return send(Object.class.cast(request));
+            return this.<T>send(Object.class.cast(request));
         }
         
         @Override
         public <T> T send(List<?> request) {
-            return send(Object.class.cast(request));
+            return this.<T>send(Object.class.cast(request));
         }
         
         private <T> T send(Object request) {
