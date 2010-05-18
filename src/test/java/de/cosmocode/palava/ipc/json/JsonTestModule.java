@@ -26,7 +26,7 @@ import de.cosmocode.palava.core.inject.TypeConverterModule;
 import de.cosmocode.palava.core.lifecycle.LifecycleModule;
 import de.cosmocode.palava.ipc.IpcEventModule;
 import de.cosmocode.palava.ipc.netty.Boss;
-import de.cosmocode.palava.ipc.netty.NettyModule;
+import de.cosmocode.palava.ipc.netty.NettyServiceModule;
 import de.cosmocode.palava.ipc.netty.Worker;
 import de.cosmocode.palava.ipc.protocol.EchoProtocol;
 import de.cosmocode.palava.jmx.FakeMBeanServerModule;
@@ -48,7 +48,7 @@ public final class JsonTestModule implements Module {
         binder.install(new FakeMBeanServerModule());
         binder.install(new ExecutorModule(Boss.class, Boss.NAME));
         binder.install(new ExecutorModule(Worker.class, Worker.NAME));
-        binder.install(new NettyModule());
+        binder.install(new NettyServiceModule());
         binder.install(new JsonNettyModule());
         binder.install(new IpcEventModule());
         binder.install(new JsonFrameDecoderModule());
