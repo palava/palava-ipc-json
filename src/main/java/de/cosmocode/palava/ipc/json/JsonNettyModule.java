@@ -24,6 +24,7 @@ import org.jboss.netty.handler.codec.string.StringDecoder;
 import org.jboss.netty.handler.codec.string.StringEncoder;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Predicate;
 import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Provider;
@@ -105,7 +106,14 @@ public final class JsonNettyModule implements Module {
     @Singleton
     @Json
     Iterable<Protocol> provideProtocols(Registry registry) {
-        return registry.find(Protocol.class, Json.OR_ANY);
+        return registry.find(Protocol.class, new Predicate<Object>() {
+            
+            @Override
+            public boolean apply(Object input) {
+                return input == null || input == Json.class;
+            }
+            
+        });
     }
     
 }
