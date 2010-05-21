@@ -27,7 +27,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.inject.Binder;
 import com.google.inject.Module;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
@@ -64,6 +63,7 @@ public final class JsonNettyModule implements Module {
      * @return new {@link ChannelPipeline}
      */
     @Provides
+    @Json
     ChannelPipeline provideChannelPipeline(@JsonFraming ChannelHandler frameDecoder,
         StringDecoder stringDecoder, StringEncoder stringEncoder,
         JsonDecoder decoder, JsonEncoder encoder, JsonHandler handler) {
@@ -73,26 +73,6 @@ public final class JsonNettyModule implements Module {
             decoder, encoder,
             handler
         );
-    }
-
-    /**
-     * Provides a channel pipeline factory.
-     * 
-     * @since 1.0
-     * @param provider provider for the underlying pipeline
-     * @return a {@link ChannelPipelineFactory}
-     */
-    @Provides
-    @Singleton
-    ChannelPipelineFactory providerChannelPipelineFactory(final Provider<ChannelPipeline> provider) {
-        return new ChannelPipelineFactory() {
-            
-            @Override
-            public ChannelPipeline getPipeline() {
-                return provider.get();
-            }
-            
-        };
     }
     
     /**
