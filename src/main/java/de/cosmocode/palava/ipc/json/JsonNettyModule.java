@@ -31,6 +31,9 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
 import de.cosmocode.palava.core.Registry;
+import de.cosmocode.palava.ipc.netty.ConnectionManager;
+import de.cosmocode.palava.ipc.netty.ProtocolHandler;
+import de.cosmocode.palava.ipc.netty.ProtocolHandlerModule;
 import de.cosmocode.palava.ipc.protocol.Protocol;
 
 /**
@@ -47,13 +50,14 @@ public final class JsonNettyModule implements Module {
         binder.bind(StringEncoder.class).toInstance(new StringEncoder(Charsets.UTF_8));
         binder.bind(JsonDecoder.class).in(Singleton.class);
         binder.bind(JsonEncoder.class).in(Singleton.class);
-        binder.bind(JsonHandler.class).in(Singleton.class);
+        binder.install(new ProtocolHandlerModule(Json.class));
     }
-
+    
     /**
      * Provides a channel pipeline.
      * 
      * @since 1.0
+     * @param manager the connection manager
      * @param frameDecoder the frame decoder used to frame json structures
      * @param stringDecoder the string decoder
      * @param stringEncoder the string encoder
@@ -64,10 +68,13 @@ public final class JsonNettyModule implements Module {
      */
     @Provides
     @Json
-    ChannelPipeline provideChannelPipeline(@JsonFraming ChannelHandler frameDecoder,
+    ChannelPipeline provideChannelPipeline(
+        ConnectionManager manager,
+        @JsonFraming ChannelHandler frameDecoder,
         StringDecoder stringDecoder, StringEncoder stringEncoder,
-        JsonDecoder decoder, JsonEncoder encoder, JsonHandler handler) {
+        JsonDecoder decoder, JsonEncoder encoder, @Json ProtocolHandler handler) {
         return Channels.pipeline(
+            manager,
             frameDecoder,
             stringDecoder, stringEncoder,
             decoder, encoder,
