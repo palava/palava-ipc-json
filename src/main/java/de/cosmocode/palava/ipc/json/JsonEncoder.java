@@ -16,9 +16,13 @@
 
 package de.cosmocode.palava.ipc.json;
 
+import java.io.OutputStream;
+
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
@@ -27,8 +31,10 @@ import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
+import de.cosmocode.palava.ipc.netty.ChannelBuffering;
+
 /**
- * Encodes objects into json.
+ * Encodes objects into json {@link ChannelBuffer}.
  *
  * @since 1.0
  * @author Willi Schoenborn
@@ -46,7 +52,10 @@ final class JsonEncoder extends OneToOneEncoder {
     
     @Override
     protected Object encode(ChannelHandlerContext ctx, Channel channel, Object message) throws Exception {
-        return mapper.writeValueAsString(message);
+        final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
+        final OutputStream stream = ChannelBuffering.asOutputStream(buffer);
+        mapper.writeValue(stream, message);
+        return buffer;
     }
 
 }

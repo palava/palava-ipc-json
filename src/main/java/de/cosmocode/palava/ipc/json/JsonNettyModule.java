@@ -20,10 +20,7 @@ import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
-import org.jboss.netty.handler.codec.string.StringDecoder;
-import org.jboss.netty.handler.codec.string.StringEncoder;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.inject.Binder;
 import com.google.inject.Module;
@@ -46,11 +43,9 @@ public final class JsonNettyModule implements Module {
 
     @Override
     public void configure(Binder binder) {
-        binder.bind(StringDecoder.class).toInstance(new StringDecoder(Charsets.UTF_8));
-        binder.bind(StringEncoder.class).toInstance(new StringEncoder(Charsets.UTF_8));
         binder.bind(JsonDecoder.class).in(Singleton.class);
         binder.bind(JsonEncoder.class).in(Singleton.class);
-        binder.install(new ProtocolHandlerModule(Json.class));
+        binder.install(ProtocolHandlerModule.annotatedWith(Json.class));
     }
     
     /**
@@ -59,8 +54,6 @@ public final class JsonNettyModule implements Module {
      * @since 1.0
      * @param manager the connection manager
      * @param frameDecoder the frame decoder used to frame json structures
-     * @param stringDecoder the string decoder
-     * @param stringEncoder the string encoder
      * @param decoder string to json decoder
      * @param encoder json to string encoder
      * @param handler json handler
@@ -71,12 +64,10 @@ public final class JsonNettyModule implements Module {
     ChannelPipeline provideChannelPipeline(
         ConnectionManager manager,
         @JsonFraming ChannelHandler frameDecoder,
-        StringDecoder stringDecoder, StringEncoder stringEncoder,
         JsonDecoder decoder, JsonEncoder encoder, @Json ProtocolHandler handler) {
         return Channels.pipeline(
             manager,
             frameDecoder,
-            stringDecoder, stringEncoder,
             decoder, encoder,
             handler
         );

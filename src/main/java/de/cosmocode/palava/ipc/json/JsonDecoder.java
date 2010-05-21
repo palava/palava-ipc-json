@@ -16,12 +16,14 @@
 
 package de.cosmocode.palava.ipc.json;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelException;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -30,11 +32,14 @@ import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
+import de.cosmocode.palava.ipc.netty.ChannelBuffering;
+
 /**
- * Decodes a json string into a {@link List} or a {@link Map}.
+ * Decodes a json {@link ChannelBuffer} into a {@link List} or a {@link Map}.
  *
  * @since 1.0
  * @author Willi Schoenborn
@@ -54,9 +59,10 @@ final class JsonDecoder extends OneToOneDecoder {
     
     @Override
     protected Object decode(ChannelHandlerContext ctx, Channel channel, Object message) throws Exception {
-        if (message instanceof String) {
-            final String content = String.class.cast(message);
-            final char c = content.charAt(0);
+        if (message instanceof ChannelBuffer) {
+            final ChannelBuffer buffer = ChannelBuffer.class.cast(message);
+            final InputStream content = ChannelBuffering.asInputStream(buffer);
+            final byte c = buffer.getByte(0);
             if (c == '[') {
                 LOG.trace("Decoding list from {}", content);
                 return mapper.readValue(content, List.class);
@@ -64,7 +70,7 @@ final class JsonDecoder extends OneToOneDecoder {
                 LOG.trace("Decoding map from {}", content);
                 return mapper.readValue(content, Map.class);
             } else {
-                throw new ChannelException("Invalid json " + content);
+                throw new ChannelException(String.format("Invalid json %s", buffer.toString(Charsets.UTF_8)));
             }
         } else {
             return message;
