@@ -30,7 +30,9 @@ import de.cosmocode.palava.core.lifecycle.LifecycleModule;
 import de.cosmocode.palava.ipc.IpcEventModule;
 import de.cosmocode.palava.ipc.netty.Boss;
 import de.cosmocode.palava.ipc.netty.ChannelPipelineFactoryModule;
+import de.cosmocode.palava.ipc.netty.DefaultConnectionManagerModule;
 import de.cosmocode.palava.ipc.netty.NettyServiceModule;
+import de.cosmocode.palava.ipc.netty.NioServerSocketChannelFactoryModule;
 import de.cosmocode.palava.ipc.netty.Worker;
 import de.cosmocode.palava.ipc.protocol.EchoProtocol;
 import de.cosmocode.palava.jmx.FakeMBeanServerModule;
@@ -50,14 +52,19 @@ public final class JsonTestModule implements Module {
         binder.install(new DefaultRegistryModule());
         binder.install(new DefaultThreadProviderModule());
         binder.install(new FakeMBeanServerModule());
+        
         binder.install(new ExecutorModule(Boss.class, Boss.NAME));
         binder.install(new ExecutorModule(Worker.class, Worker.NAME));
+        
+        binder.install(new IpcEventModule());
+        
         binder.install(new NettyServiceModule());
         binder.install(new ChannelPipelineFactoryModule());
+        binder.install(new NioServerSocketChannelFactoryModule());
+        binder.install(new DefaultConnectionManagerModule());
         binder.bind(ChannelPipeline.class).to(Key.get(ChannelPipeline.class, Json.class));
-        binder.install(new JsonNettyModule());
-        binder.install(new IpcEventModule());
         binder.install(new JsonFrameDecoderModule());
+        binder.install(new JsonNettyModule());
         binder.bind(EchoProtocol.class).asEagerSingleton();
     }
 
