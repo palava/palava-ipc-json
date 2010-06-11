@@ -102,5 +102,9 @@ final class JsonFrameDecoder extends FrameDecoder {
             counter -= 1;
         }
     }
+
+    int getCounter() {
+        return counter;
+    }
     
 }
