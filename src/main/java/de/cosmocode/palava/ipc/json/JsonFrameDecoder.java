@@ -16,18 +16,19 @@
 
 package de.cosmocode.palava.ipc.json;
 
-import javax.annotation.concurrent.NotThreadSafe;
-
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
+
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A {@link FrameDecoder} which frames json arrays/objects.
  * 
  * @since 1.0
  * @author Willi Schoenborn
+ * @author Tobias Sarnowski
  */
 @NotThreadSafe
 final class JsonFrameDecoder extends FrameDecoder {
@@ -49,10 +50,16 @@ final class JsonFrameDecoder extends FrameDecoder {
         if (buffer.readable()) {
             readFirst(buffer);
             count(buffer);
-            return counter == 0 ? buffer.readBytes(index + 1) : null;
-        } else {
-            return null;
+            if (counter == 0) {
+                final ChannelBuffer result = buffer.readBytes(index);
+                // reset for next iteration
+                index = 0;
+                open = 0;
+                close = 0;
+                return result;
+            }
         }
+        return null;
     }
     
     private void readFirst(ChannelBuffer buffer) {
@@ -71,18 +78,21 @@ final class JsonFrameDecoder extends FrameDecoder {
     }
     
     private void count(ChannelBuffer buffer) {
-        int i = buffer.readerIndex();
-        
+        int i = buffer.readerIndex() + index;
+
         while (i < buffer.writerIndex()) {
             if (string) {
                 inString(buffer.getByte(i));
             } else {
                 outsideOfString(buffer.getByte(i));
-                if (counter == 0) index = i - buffer.readerIndex();
+
             }
             
             i++;
+
+            if (counter == 0) break;
         }
+        index = i - buffer.readerIndex();
     }
     
     private void inString(byte current) {
