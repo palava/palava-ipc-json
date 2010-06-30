@@ -16,12 +16,12 @@
 
 package de.cosmocode.palava.ipc.json;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
-
-import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A {@link FrameDecoder} which frames json arrays/objects.
