@@ -16,6 +16,7 @@
 
 package de.cosmocode.palava.ipc.json;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -43,6 +44,7 @@ public final class JsonNettyModule implements Module {
 
     @Override
     public void configure(Binder binder) {
+        binder.bind(ObjectMapper.class).in(Singleton.class);
         binder.bind(JsonDecoder.class).in(Singleton.class);
         binder.bind(JsonEncoder.class).in(Singleton.class);
         binder.install(ProtocolHandlerModule.annotatedWith(Json.class));

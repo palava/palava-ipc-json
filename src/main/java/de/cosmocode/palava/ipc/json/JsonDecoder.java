@@ -63,12 +63,12 @@ final class JsonDecoder extends OneToOneDecoder {
             final ChannelBuffer buffer = ChannelBuffer.class.cast(message);
             final InputStream content = ChannelBuffering.asInputStream(buffer);
             final byte c = buffer.getByte(0);
-            if (c == '[') {
-                LOG.trace("Decoding list from {}", content);
-                return mapper.readValue(content, List.class);
-            } else if (c == '{') {
+            if (c == '{') {
                 LOG.trace("Decoding map from {}", content);
                 return mapper.readValue(content, Map.class);
+            } else if (c == '[') {
+                LOG.trace("Decoding list from {}", content);
+                return mapper.readValue(content, List.class);
             } else {
                 throw new ChannelException(String.format("Invalid json %s", buffer.toString(Charsets.UTF_8)));
             }

@@ -43,6 +43,11 @@ import de.cosmocode.palava.ipc.netty.ChannelBuffering;
 @ThreadSafe
 final class JsonEncoder extends OneToOneEncoder {
 
+    /**
+     * Defaults to the same value as {@link ChannelBuffers#dynamicBuffer()}.
+     */
+    private int estimatedResponseLength = 256;
+    
     private final ObjectMapper mapper;
     
     @Inject
@@ -50,9 +55,14 @@ final class JsonEncoder extends OneToOneEncoder {
         this.mapper = Preconditions.checkNotNull(mapper, "Mapper");
     }
     
+    @Inject(optional = true)
+    void setEstimatedResponseLength(int estimatedResponseLength) {
+        this.estimatedResponseLength = estimatedResponseLength;
+    }
+    
     @Override
     protected Object encode(ChannelHandlerContext ctx, Channel channel, Object message) throws Exception {
-        final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
+        final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer(estimatedResponseLength);
         final OutputStream stream = ChannelBuffering.asOutputStream(buffer);
         mapper.writeValue(stream, message);
         return buffer;
