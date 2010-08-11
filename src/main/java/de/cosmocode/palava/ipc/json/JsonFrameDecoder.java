@@ -31,7 +31,7 @@ import org.jboss.netty.handler.codec.frame.FrameDecoder;
  * @author Tobias Sarnowski
  */
 @NotThreadSafe
-final class JsonFrameDecoder extends FrameDecoder {
+public final class JsonFrameDecoder extends FrameDecoder {
 
     private char open;
     

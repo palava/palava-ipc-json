@@ -29,7 +29,6 @@ import com.google.inject.BindingAnnotation;
  * Binding annotation for a {@link ChannelHandler} used for framing
  * json values.
  *
- * @since 
  * @author Willi Schoenborn
  */
 @Retention(RetentionPolicy.RUNTIME)

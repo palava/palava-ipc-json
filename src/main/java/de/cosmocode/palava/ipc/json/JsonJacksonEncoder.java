@@ -20,7 +20,6 @@ import java.io.OutputStream;
 
 import javax.annotation.concurrent.ThreadSafe;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -29,9 +28,10 @@ import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+
+import de.cosmocode.jackson.StreamingJacksonRenderer;
 
 /**
  * Encodes objects into json {@link ChannelBuffer}.
@@ -41,19 +41,12 @@ import com.google.inject.name.Named;
  */
 @Sharable
 @ThreadSafe
-public final class JsonEncoder extends OneToOneEncoder {
+public final class JsonJacksonEncoder extends OneToOneEncoder {
 
     /**
      * Defaults to the same value as {@link ChannelBuffers#dynamicBuffer()}.
      */
     private int estimatedResponseLength = 256;
-    
-    private final ObjectMapper mapper;
-    
-    @Inject
-    public JsonEncoder(ObjectMapper mapper) {
-        this.mapper = Preconditions.checkNotNull(mapper, "Mapper");
-    }
     
     @Inject(optional = true)
     void setEstimatedResponseLength(@Named(JsonConfig.ESITMATED_RESPONSE_LENGTH) int estimatedResponseLength) {
@@ -64,7 +57,13 @@ public final class JsonEncoder extends OneToOneEncoder {
     protected Object encode(ChannelHandlerContext ctx, Channel channel, Object message) throws Exception {
         final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer(estimatedResponseLength);
         final OutputStream stream = new ChannelBufferOutputStream(buffer);
-        mapper.writeValue(stream, message);
+        
+        try {
+            new StreamingJacksonRenderer(stream).value(message).build();
+        } finally {
+            stream.close();
+        }
+        
         return buffer;
     }
 

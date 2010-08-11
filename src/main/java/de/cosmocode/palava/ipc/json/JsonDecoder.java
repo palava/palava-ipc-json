@@ -24,6 +24,7 @@ import javax.annotation.concurrent.ThreadSafe;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelException;
 import org.jboss.netty.channel.ChannelHandler.Sharable;
@@ -36,8 +37,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
-import de.cosmocode.palava.ipc.netty.ChannelBuffering;
-
 /**
  * Decodes a json {@link ChannelBuffer} into a {@link List} or a {@link Map}.
  *
@@ -46,7 +45,7 @@ import de.cosmocode.palava.ipc.netty.ChannelBuffering;
  */
 @Sharable
 @ThreadSafe
-final class JsonDecoder extends OneToOneDecoder {
+public final class JsonDecoder extends OneToOneDecoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonDecoder.class);
 
@@ -61,14 +60,14 @@ final class JsonDecoder extends OneToOneDecoder {
     protected Object decode(ChannelHandlerContext ctx, Channel channel, Object message) throws Exception {
         if (message instanceof ChannelBuffer) {
             final ChannelBuffer buffer = ChannelBuffer.class.cast(message);
-            final InputStream content = ChannelBuffering.asInputStream(buffer);
+            final InputStream stream = new ChannelBufferInputStream(buffer);
             final byte c = buffer.getByte(0);
             if (c == '{') {
-                LOG.trace("Decoding map from {}", content);
-                return mapper.readValue(content, Map.class);
+                LOG.trace("Decoding map from {}", stream);
+                return mapper.readValue(stream, Map.class);
             } else if (c == '[') {
-                LOG.trace("Decoding list from {}", content);
-                return mapper.readValue(content, List.class);
+                LOG.trace("Decoding list from {}", stream);
+                return mapper.readValue(stream, List.class);
             } else {
                 throw new ChannelException(String.format("Invalid json %s", buffer.toString(Charsets.UTF_8)));
             }

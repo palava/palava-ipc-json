@@ -47,6 +47,7 @@ public final class JsonNettyModule implements Module {
         binder.bind(ObjectMapper.class).in(Singleton.class);
         binder.bind(JsonDecoder.class).in(Singleton.class);
         binder.bind(JsonEncoder.class).in(Singleton.class);
+        binder.bind(JsonJacksonEncoder.class).in(Singleton.class);
         binder.install(ProtocolHandlerModule.annotatedWith(Json.class));
     }
     
