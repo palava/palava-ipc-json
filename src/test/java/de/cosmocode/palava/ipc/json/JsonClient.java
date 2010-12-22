@@ -34,7 +34,7 @@ import de.cosmocode.palava.ipc.netty.NettyClient;
  * @since 1.0
  * @author Willi Schoenborn
  */
-public final class JsonClient extends AbstractClient implements Client {
+public final class JsonClient extends AbstractClient {
 
     private final ObjectMapper mapper = new ObjectMapper();
     
