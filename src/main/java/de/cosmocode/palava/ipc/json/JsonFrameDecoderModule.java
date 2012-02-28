@@ -25,7 +25,7 @@ import com.google.inject.Scopes;
 /**
  * Binds {@link JsonFrameDecoder} as {@link JsonFraming} {@link ChannelHandler}.
  *
- * @since 
+ * @since 1.0
  * @author Willi Schoenborn
  */
 public final class JsonFrameDecoderModule implements Module {
