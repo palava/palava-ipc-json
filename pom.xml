@@ -27,17 +27,40 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+        <dependency>
             <groupId>de.cosmocode</groupId>
             <artifactId>cosmocode-json-jackson</artifactId>
             <version>[1.0,2)</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+            <version>1.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
             <version>1.5.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.jboss.netty</groupId>
+            <artifactId>netty</artifactId>
+            <version>3.2.7.Final</version>
+        </dependency>
 
         <!-- palava dependencies -->
+        <dependency>
+            <groupId>de.cosmocode.palava</groupId>
+            <artifactId>palava-core</artifactId>
+            <version>[2.10.3,3)</version>
+        </dependency>
         <dependency>
             <groupId>de.cosmocode.palava</groupId>
             <artifactId>palava-ipc-netty</artifactId>
@@ -72,6 +95,18 @@
             <artifactId>palava-ipc-netty</artifactId>
             <version>[2.0-SNAPSHOT,3)</version>
             <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.cosmocode.palava</groupId>
+            <artifactId>palava-ipc</artifactId>
+            <version>[2.0,3)</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.cosmocode.palava</groupId>
+            <artifactId>palava-jmx</artifactId>
+            <version>[1.2,2)</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
