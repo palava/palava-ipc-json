@@ -106,9 +106,9 @@ public final class JsonFrameDecoder extends FrameDecoder {
     
     private void outsideOfString(byte current) {
         if (current == open) {
-            counter++;
+            ++counter;
         } else if (current == close) {
-            counter--;
+            --counter;
         } else if (current == '"') {
             string = true;
         }
