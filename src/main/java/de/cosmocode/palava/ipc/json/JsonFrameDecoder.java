@@ -85,7 +85,6 @@ public final class JsonFrameDecoder extends FrameDecoder {
                 inString(buffer.getByte(i));
             } else {
                 outsideOfString(buffer.getByte(i));
-
             }
             
             i++;
@@ -107,9 +106,11 @@ public final class JsonFrameDecoder extends FrameDecoder {
     
     private void outsideOfString(byte current) {
         if (current == open) {
-            counter += 1;
+            counter++;
         } else if (current == close) {
-            counter -= 1;
+            counter--;
+        } else if (current == '"') {
+            string = true;
         }
     }
 
